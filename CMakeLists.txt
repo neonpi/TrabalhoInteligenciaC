@@ -9,5 +9,9 @@ set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTOR
 
 add_executable(trabalho-inteligencia-computacional
     src/main.cpp
+        src/search.cpp
+        src/search.h
+        src/localsearch.h
+        src/localsearch.cpp
 )
 target_include_directories(trabalho-inteligencia-computacional PUBLIC "${PROJECT_SOURCE_DIR}/include")
