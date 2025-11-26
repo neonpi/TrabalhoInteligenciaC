@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <random>
 #include <set>
+#include <stdexcept>
 
 #include "dependency_graph.hpp"
 
@@ -156,7 +157,7 @@ std::vector<int> Greedy::greedyRandomizedAdaptiveProcedure(const DependencyGraph
 
 int Greedy::calculateTimespan(const DependencyGraph& dependency_graph, const std::vector<int>& schedule) {
     if (schedule.size() == 0) {
-        return 0;
+        throw std::invalid_argument("Empty schedule!\n");
     }
 
     int timespan = 0;
@@ -172,4 +173,71 @@ int Greedy::calculateTimespan(const DependencyGraph& dependency_graph, const std
     }
 
     return timespan;
+}
+
+bool Greedy::checkScheduleValidity(const DependencyGraph& dependency_graph, const std::vector<int>& schedule) {
+    if (schedule.size() == 0) {
+        throw std::invalid_argument("Empty schedule!\n");
+    }
+
+    // this is here mostly to reduce verbosity
+    auto jobs = dependency_graph.getJobs();
+    auto precedence_delay = dependency_graph.getPrecedenceDelay();
+    auto sequence_setup_time = dependency_graph.getSequenceSetupTime();
+
+    std::map<int, int> time_left_on_delay;
+    std::set<int> can_be_added;
+    for (const auto [id, job] : dependency_graph.getJobs()) {
+        if (job.getDependencyCount() == 0) {
+            can_be_added.insert(id);
+        }
+    }
+
+    int previous_id = schedule[0];
+    can_be_added.erase(previous_id);
+    for (auto dependent_id : dependency_graph.getJobs().at(previous_id).getDependents()) {
+        time_left_on_delay.emplace(dependent_id, dependency_graph.getPrecedenceDelay()[previous_id][dependent_id]);
+    }
+
+    for (auto id_iterator = std::next(schedule.cbegin(), 1); id_iterator != schedule.cend(); id_iterator++) {
+        int id = *id_iterator;
+
+        if (!can_be_added.contains(id)) {
+            return false;
+        }
+
+        can_be_added.erase(id);
+
+        // can't remove during loop, otherwise the loop will break
+        std::vector<int> list_to_move;
+        for (auto& value : time_left_on_delay) {
+            int time_to_remove = sequence_setup_time[previous_id - 1][id - 1] + jobs.at(id).getProcessingTime();
+            value.second -= time_to_remove;
+
+            if (value.second <= 0) {
+                list_to_move.push_back(value.first);
+            }
+        }
+
+        for (auto value : list_to_move) {
+            time_left_on_delay.erase(value);
+            can_be_added.insert(value);
+        }
+
+        for (auto dependent_id : dependency_graph.getJobs().at(id).getDependents()) {
+            if (precedence_delay[id - 1][dependent_id - 1] <= 0) {
+                can_be_added.insert(dependent_id);
+            } else {
+                time_left_on_delay.emplace(dependent_id, dependency_graph.getPrecedenceDelay()[id - 1][dependent_id - 1]);
+            }
+        }
+
+        previous_id = id;
+    }
+
+    if (can_be_added.size() != 0) {
+        return false;
+    }
+
+    return true;
 }

@@ -16,6 +16,11 @@ int main(int argc, char *argv[]) {
 
     auto result = Greedy::greedyRandomizedAdaptiveProcedure(dependency_graph, 0.3, 0);
     int timespan = Greedy::calculateTimespan(dependency_graph, result);
+    bool valid_result = Greedy::checkScheduleValidity(dependency_graph, result);
+    if (!valid_result) {
+        std::cout << "INVALID RESULT!!!!!!!!!!!!!!!\n\n\n\n\n\n\n\n\n\n\n\n";
+    }
+
     std::cout << timespan << ": ";
     for (auto value : result) {
         std::cout << value << " ";
