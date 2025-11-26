@@ -11,5 +11,6 @@ add_executable(trabalho-inteligencia-computacional
     src/main.cpp
     src/job.cpp
     src/dependency_graph.cpp
+    src/greedy.cpp
 )
 target_include_directories(trabalho-inteligencia-computacional PUBLIC "${PROJECT_SOURCE_DIR}/include")
