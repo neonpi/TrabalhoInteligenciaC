@@ -9,5 +9,7 @@ set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTOR
 
 add_executable(trabalho-inteligencia-computacional
     src/main.cpp
+    src/job.cpp
+    src/dependency_graph.cpp
 )
 target_include_directories(trabalho-inteligencia-computacional PUBLIC "${PROJECT_SOURCE_DIR}/include")
