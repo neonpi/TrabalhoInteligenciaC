@@ -1,6 +1,7 @@
 #include "greedy.hpp"
 
 #include <algorithm>
+#include <iostream>
 #include <random>
 #include <set>
 #include <stdexcept>
@@ -68,7 +69,7 @@ std::vector<std::pair<int, float>> constructCandidateList(int previous_job, cons
     for (int id : not_yet_completed_jobs) {
         if (
             dependency_graph.getJobs().at(id).getDependencyCount() != 0 &&
-            !(time_left_on_delay.find(id) != time_left_on_delay.end() && time_left_on_delay.at(id) <= 0)
+            (time_left_on_delay.find(id) == time_left_on_delay.end() || time_left_on_delay.at(id) > 0)
         ) {
             continue;
         }
@@ -240,4 +241,91 @@ bool Greedy::checkScheduleValidity(const DependencyGraph& dependency_graph, cons
     }
 
     return true;
+}
+
+std::vector<int> Greedy::localSearch(const DependencyGraph& dependency_graph, float alpha, unsigned int seed) {
+    auto best_result = Greedy::greedyRandomizedAdaptiveProcedure(dependency_graph, alpha, seed);
+    auto best_timespan = Greedy::calculateTimespan(dependency_graph, best_result);
+
+    // swaps two indices
+    {
+        bool improved = true;
+        constexpr int max_iterations = 500;
+        int iterations = 0;
+        while (improved && iterations < max_iterations) {
+            improved = false;
+
+            int previous_best_timespan;
+            for (int i = 0; i < best_result.size(); i++) {
+                for (int j = 0; j < best_result.size(); j++) {
+                    if (i == j) {
+                        continue;
+                    }
+
+                    auto result = best_result;
+                    std::swap(result[i], result[j]);
+                    if (Greedy::checkScheduleValidity(dependency_graph, result)) {
+                        auto timespan = Greedy::calculateTimespan(dependency_graph, result);
+
+                        if (timespan < best_timespan) {
+                            best_result = result;
+                            best_timespan = timespan;
+
+                            improved = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (best_timespan < previous_best_timespan) {
+                    break;
+                }
+            }
+
+            iterations++;
+        }
+    }
+
+    // inserts
+    {
+        bool improved = true;
+        constexpr int max_iterations = 500;
+        int iterations = 0;
+        while (improved && iterations < max_iterations) {
+            improved = false;
+
+            int previous_best_timespan;
+            for (int i = 0; i < best_result.size(); i++) {
+                for (int j = 0; j < best_result.size(); j++) {
+                    if (i == j) {
+                        continue;
+                    }
+
+                    auto result = best_result;
+                    int value = result[i];
+                    result.erase(result.begin() + i);
+                    result.insert(result.begin() + j, value);
+                    if (Greedy::checkScheduleValidity(dependency_graph, result)) {
+                        auto timespan = Greedy::calculateTimespan(dependency_graph, result);
+
+                        if (timespan < best_timespan) {
+                            best_result = result;
+                            best_timespan = timespan;
+
+                            improved = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (best_timespan < previous_best_timespan) {
+                    break;
+                }
+            }
+
+            iterations++;
+        }
+    }
+
+    return best_result;
 }

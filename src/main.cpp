@@ -1,3 +1,4 @@
+#include <chrono>
 #include <filesystem>
 #include <iostream>
 
@@ -14,14 +15,13 @@ int main(int argc, char *argv[]) {
     std::filesystem::path instance_file_path{argv[1]};
     DependencyGraph dependency_graph{instance_file_path};
 
-    auto result = Greedy::greedyRandomizedAdaptiveProcedure(dependency_graph, 0.3, 0);
-    int timespan = Greedy::calculateTimespan(dependency_graph, result);
-    bool valid_result = Greedy::checkScheduleValidity(dependency_graph, result);
-    if (!valid_result) {
-        std::cout << "INVALID RESULT!!!!!!!!!!!!!!!\n\n\n\n\n\n\n\n\n\n\n\n";
-    }
+    auto start_time = std::chrono::high_resolution_clock::now();
+    auto result = Greedy::localSearch(dependency_graph, 0.3, 3);
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
 
-    std::cout << timespan << ": ";
+    int timespan = Greedy::calculateTimespan(dependency_graph, result);
+    std::cout << timespan << " (" << duration.count() << "ms)" << ": ";
     for (auto value : result) {
         std::cout << value << " ";
     }
